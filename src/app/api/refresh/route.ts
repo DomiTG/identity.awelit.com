@@ -1,29 +1,21 @@
-import type { NextApiRequest, NextApiResponse } from "next";
 import { sign, verify as verifyJWT } from "jsonwebtoken";
 import prisma from "@/server/db";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
+export async function POST(
+    req: Request,
 ) {
-  if(req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
 
   try {
-    const refreshToken = req.cookies["refresh_token"];
+    const refreshToken = req.headers.get("Authorization")?.split(" ")[1];
     if (!refreshToken) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
     const decoded: any = verifyJWT(
       refreshToken,
       process.env.REFRESH_TOKEN_SECRET as string
     );
     if (!decoded) {
-      return res.status(401).json({ error: "Invalid refresh token" });
+      return new Response(JSON.stringify({ error: "Invalid refresh token" }), { status: 401 });
     }
     const session = await prisma.client_sessions.findFirst({
       where: { refresh_token: refreshToken, user_id: decoded.userId },
@@ -34,7 +26,7 @@ export default async function handler(
           where: { id: session.id },
         });
       }
-      return res.status(401).json({ error: "Session expired or invalid" });
+      return new Response(JSON.stringify({ error: "Session expired or invalid" }), { status: 401 });
     }
 
     const newAccessToken = sign(
@@ -46,9 +38,9 @@ export default async function handler(
       where: { id: decoded.userId },
     });
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      return new Response(JSON.stringify({ error: "User not found" }), { status: 404 });
     }
-    return res.status(200).json({
+    return new Response(JSON.stringify({
       accessToken: newAccessToken,
       user: {
         id: user.id,
@@ -56,9 +48,9 @@ export default async function handler(
         created_at: user.created_at,
         updated_at: user.updated_at,
       },
-    });
+    }), { status: 200 });
   } catch (error) {
     console.error("Error refreshing token:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
+    return new Response(JSON.stringify({ error: "Internal Server Error" }), { status: 500 });
   }
 }
