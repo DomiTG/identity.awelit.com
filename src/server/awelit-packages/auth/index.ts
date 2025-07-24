@@ -41,7 +41,9 @@ export class AwelitAuth {
             throw new Error("No refresh token available");
         }
         const response = await axios.post(`${this.url}/refresh`, {
-            token: this.refreshToken
+            headers: {
+                Authorization: `Bearer ${this.refreshToken}`
+            }
         });
 
         const { accessToken, user } = response.data;
@@ -50,4 +52,5 @@ export class AwelitAuth {
 
         return user as AuthUser;
     }
+
 }
