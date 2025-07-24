@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model clients {
+  id            Int            @id @default(autoincrement())
+  name          String         @db.VarChar(36)
+  title         String         @db.VarChar(64)
+  description   String         @db.VarChar(512)
+  client_id     String         @db.VarChar(36)
+  client_secret String         @db.VarChar(48)
+  redirect_uris String         @db.LongText
+  client_users  client_users[]
+}
+
+model client_users {
+  id              Int               @id @default(autoincrement())
+  client_id       Int
+  email_address   String            @db.VarChar(64)
+  password        String?           @db.VarChar(512)
+  created_at      DateTime          @db.DateTime(0)
+  updated_at      DateTime          @db.DateTime(0)
+  client_sessions client_sessions[]
+  client          clients           @relation(fields: [client_id], references: [id], onUpdate: Restrict, map: "client_users_ibfk_1")
+
+  @@index([client_id], map: "client_id")
+}
+
+model client_sessions {
+  id            Int          @id @default(autoincrement())
+  user_id       Int
+  refresh_token String       @db.VarChar(512)
+  created_at    DateTime     @default(now()) @db.DateTime(0)
+  valid_until   DateTime     @db.DateTime(0)
+  valid         Boolean      @default(false)
+  user          client_users @relation(fields: [user_id], references: [id], onUpdate: Restrict, map: "client_sessions_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+}
