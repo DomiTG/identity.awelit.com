@@ -12,6 +12,7 @@ model clients {
   id            Int            @id @default(autoincrement())
   name          String         @db.VarChar(36)
   title         String         @db.VarChar(64)
+  tos_url       String         @db.VarChar(256)
   description   String         @db.VarChar(512)
   client_id     String         @db.VarChar(36)
   client_secret String         @db.VarChar(48)
