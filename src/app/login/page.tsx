@@ -104,7 +104,7 @@ export default async function LoginPage({ searchParams }: Props) {
           </div>
         </div>
 
-        <div className="hidden md:flex items-center space-x-4 text-white text-sm">
+        <div className="hidden md:flex flex-col lg:flex-row items-center space-x-4 text-white text-sm">
           <span>
             Powered by <strong>AWELIT</strong>
           </span>
