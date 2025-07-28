@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import IClient from "../interfaces/IClient";
 import ReCAPTCHA from "react-google-recaptcha";
 import { trpc } from "@/utils/trpc";
+import { TRPCClientError } from "@trpc/client";
 
 interface LoginFormProps {
   client: IClient;
@@ -16,6 +17,7 @@ export default function LoginForm({ client, redirectUri }: LoginFormProps) {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({ email: "", password: "" });
+  const [loginError, setLoginError] = useState("");
   const captchaRef = useRef<ReCAPTCHA>(null);
 
   const validateForm = () => {
@@ -48,6 +50,7 @@ export default function LoginForm({ client, redirectUri }: LoginFormProps) {
     if (!validateForm()) return;
 
     setIsLoading(true);
+    setLoginError(""); // Clear any previous errors
 
     try {
       const captchaToken = await captchaRef.current?.executeAsync();
@@ -66,8 +69,13 @@ export default function LoginForm({ client, redirectUri }: LoginFormProps) {
 
       // Redirect to the client's redirect URI with auth code or token
       window.location.href = `${redirectUri}?refresh_token=${res.refreshToken}`;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login failed:", error);
+      if(error instanceof TRPCClientError) {
+        setLoginError(error.message);
+      } else {
+        setLoginError("An unexpected error occurred. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -83,6 +91,30 @@ export default function LoginForm({ client, redirectUri }: LoginFormProps) {
           Přihlaste se a pokračujte k {client.name}
         </p>
       </div>
+
+      {loginError && (
+        <div className="mb-4 p-3 rounded-md bg-red-50 border border-red-200">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg
+                className="h-5 w-5 text-red-400"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{loginError}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <form className="space-y-6" onSubmit={handleSubmit}>
         <div>
@@ -164,7 +196,7 @@ export default function LoginForm({ client, redirectUri }: LoginFormProps) {
             </a>
           </div>
         </div>
-        
+
         <ReCAPTCHA
           sitekey="6Ld3PY0rAAAAALr1pynPbbQTt92YOEHznQtHpKnm"
           size="invisible"
@@ -282,7 +314,9 @@ export default function LoginForm({ client, redirectUri }: LoginFormProps) {
         <p className="text-sm text-gray-600">
           Nemáte účet?{" "}
           <a
-            href={`/register?client_id=${client.client_id}&redirect_uri=${encodeURIComponent(redirectUri)}`}
+            href={`/register?client_id=${client.client_id}&redirect_uri=${encodeURIComponent(
+              redirectUri
+            )}`}
             className="font-medium text-indigo-600 hover:text-indigo-500 transition duration-150"
           >
             Vytvořte si jeden

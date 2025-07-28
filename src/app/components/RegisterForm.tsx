@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { trpc } from "@/utils/trpc";
 import IClient from "../interfaces/IClient";
 import ReCAPTCHA from "react-google-recaptcha";
+import { TRPCClientError } from "@trpc/client";
 
 interface RegisterFormProps {
   client: IClient;
@@ -19,6 +20,7 @@ export default function RegisterForm({
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [registerError, setRegisterError] = useState("");
   const [errors, setErrors] = useState({
     email: "",
     password: "",
@@ -64,6 +66,7 @@ export default function RegisterForm({
     if (!validateForm()) return;
 
     setIsLoading(true);
+    setRegisterError(""); // Clear any previous errors
 
     try {
       const captcha = await captchaRef.current?.executeAsync();
@@ -80,8 +83,13 @@ export default function RegisterForm({
         throw new Error("Registration failed");
       }
       window.location.href = `${redirectUri}?refresh_token=${res.refreshToken}`;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Registration failed:", error);
+      if (error instanceof TRPCClientError) {
+        setRegisterError(error.message);
+      } else {
+        setRegisterError("An unexpected error occurred. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -97,6 +105,30 @@ export default function RegisterForm({
           Registrujte se a pokračujte k {client.name}
         </p>
       </div>
+
+      {registerError && (
+        <div className="mb-4 p-3 rounded-md bg-red-50 border border-red-200">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg
+                className="h-5 w-5 text-red-400"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{registerError}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <form className="space-y-6" onSubmit={handleSubmit}>
         <div>
