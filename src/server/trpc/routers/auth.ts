@@ -123,6 +123,7 @@ export const authRouter = router({
       const newUser = await prisma.client_users.create({
         data: {
           email_address,
+          username: email_address.split("@")[0],
           password: hashedPassword,
           client_id: client.id,
           updated_at: new Date(),
