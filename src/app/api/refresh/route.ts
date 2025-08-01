@@ -44,6 +44,7 @@ export async function POST(
       accessToken: newAccessToken,
       user: {
         id: user.id,
+        username: user.username,
         email_address: user.email_address,
         created_at: user.created_at,
         updated_at: user.updated_at,

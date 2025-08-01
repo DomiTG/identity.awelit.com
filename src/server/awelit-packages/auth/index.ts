@@ -5,6 +5,7 @@ import axios from "axios";
 
 export interface AwelitAuthUser {
   id: number;
+  username: string;
   email_address: string;
   created_at: Date;
   updated_at: Date;
@@ -56,7 +57,6 @@ export const listUsers = async (client_id: string, client_secret: string): Promi
   if (!client_id || !client_secret) {
     throw new Error("Client ID and secret must be provided");
   }
-  const startTime = Date.now();
   const response = await axios({
     url: `${AWELIT_AUTH_URL}/users/list`,
     method: "GET",

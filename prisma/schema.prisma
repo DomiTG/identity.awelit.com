@@ -24,6 +24,7 @@ model clients {
 model client_users {
   id              Int               @id @default(autoincrement())
   client_id       Int
+  username        String            @db.VarChar(32)
   email_address   String            @db.VarChar(64)
   password        String?           @db.VarChar(512)
   created_at      DateTime          @db.DateTime(0)
