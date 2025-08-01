@@ -6,6 +6,8 @@ export const listClients = async (): Promise<IClient[]> => {
     return clients.map((client) => ({
         id: client.id,
         name: client.name,
+        tos_url: client.tos_url,
+        privacy_url: client.privacy_url,
         title: client.title,
         description: client.description,
         client_id: client.client_id,
@@ -31,5 +33,7 @@ export const getClientById = async (client_id: string): Promise<IClient | null> 
         client_id: client.client_id,
         client_secret: client.client_secret,
         redirect_uris: client.redirect_uris ? client.redirect_uris.split(",") : [],
+        tos_url: client.tos_url,
+        privacy_url: client.privacy_url,
     };
 }
