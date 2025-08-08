@@ -17,19 +17,21 @@ export default function RegisterForm({
 }: RegisterFormProps) {
   const reg = trpc.auth.register.useMutation();
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [registerError, setRegisterError] = useState("");
   const [errors, setErrors] = useState({
     email: "",
+    username: "",
     password: "",
     confirmPassword: "",
   });
   const captchaRef = useRef<ReCAPTCHA>(null);
 
   const validateForm = () => {
-    const newErrors = { email: "", password: "", confirmPassword: "" };
+    const newErrors = { email: "", password: "", confirmPassword: "", username: "" };
     let isValid = true;
 
     if (!email) {
@@ -56,6 +58,15 @@ export default function RegisterForm({
       isValid = false;
     }
 
+    if (username && username.length < 3) {
+      newErrors.username = "Username must be at least 3 characters";
+      isValid = false;
+    } else if (username && !/^[a-zA-Z0-9_]+$/.test(username)) {
+      newErrors.username = "Username can only contain letters, numbers, and underscores";
+      isValid = false;
+
+    }
+
     setErrors(newErrors);
     return isValid;
   };
@@ -78,6 +89,7 @@ export default function RegisterForm({
         password: password,
         captchaToken: captcha,
         client_id: client.client_id,
+        ...(username ? { username } : {}),
       });
       if (!res) {
         throw new Error("Registration failed");
@@ -155,6 +167,30 @@ export default function RegisterForm({
             {errors.email && (
               <p className="mt-1 text-xs text-red-500">{errors.email}</p>
             )}
+          </div>
+        </div>
+
+        {/* OPTIONAL USERNAME */}
+        <div>
+          <label
+            htmlFor="username"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Uživatelské jméno (volitelné)
+          </label>
+          <div className="mt-1">
+            <input
+              id="username"
+              name="username"
+              type="text"
+              autoComplete="username"
+              className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150"
+              placeholder={email ? email.split("@")[0] : "Zadejte své uživatelské jméno"}
+              value=""
+              onChange={(e) => {
+                // Handle username change if needed
+              }}
+            />
           </div>
         </div>
 

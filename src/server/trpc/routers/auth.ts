@@ -91,13 +91,14 @@ export const authRouter = router({
     .input(
       z.object({
         email_address: z.string().regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/),
+        username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9_]+$/).optional(),
         password: z.string().min(6),
         captchaToken: z.string(),
         client_id: z.string(),
       })
     )
     .mutation(async ({ input }) => {
-      const { email_address, password, captchaToken, client_id } = input;
+      const { email_address, username, password, captchaToken, client_id } = input;
       const isCaptchaValid = await checkCaptcha(captchaToken);
       if (!isCaptchaValid) {
         throw new Error("Captcha verification failed");
@@ -119,11 +120,25 @@ export const authRouter = router({
       if (existingUser) {
         throw new Error("Uživatel s tímto e-mailem již existuje");
       }
+      
+      // Check for existing username if username is provided
+      if (username) {
+        const existingUsername = await prisma.client_users.findFirst({
+          where: {
+            username: username,
+            client_id: client.id,
+          },
+        });
+        if (existingUsername) {
+          throw new Error("Uživatel s tímto uživatelským jménem již existuje");
+        }
+      }
+      
       const hashedPassword = await bcrypt.hash(password, 10);
       const newUser = await prisma.client_users.create({
         data: {
           email_address,
-          username: email_address.split("@")[0],
+          username: username || email_address.split("@")[0],
           password: hashedPassword,
           client_id: client.id,
           updated_at: new Date(),
